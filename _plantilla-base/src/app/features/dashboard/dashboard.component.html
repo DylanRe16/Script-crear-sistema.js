@@ -1,0 +1,19 @@
+<div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12">
+        <app-page-header
+            icon="pi pi-home"
+            eyebrow="Panel principal"
+            [title]="'Bienvenido, ' + (authService.currentUser()?.nombreCompleto || 'a tu cuenta')"
+            subtitle="Desde aquí puedes acceder a las herramientas disponibles para tu cuenta.">
+        </app-page-header>
+    </div>
+
+    <section class="col-span-12">
+        <div class="card">
+            <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mt-0">Tu espacio de trabajo</h2>
+            <p class="text-muted-color mb-0">
+                Desde el menú puedes consultar tu perfil, actualizar tu contraseña y acceder a las herramientas disponibles para tu cuenta.
+            </p>
+        </div>
+    </section>
+</div>

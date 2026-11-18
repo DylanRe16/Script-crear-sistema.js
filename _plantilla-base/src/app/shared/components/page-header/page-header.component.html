@@ -1,0 +1,31 @@
+<header
+    class="card mb-0 border-l-4 border-l-primary bg-gradient-to-r from-surface-0 to-surface-50 dark:from-surface-900 dark:to-surface-800">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="min-w-0">
+            @if (eyebrow) {
+                <span class="mb-1 block text-xs font-bold uppercase tracking-widest text-primary">
+                    {{ eyebrow }}
+                </span>
+            }
+
+            <div class="mb-1 flex items-center gap-2">
+                @if (icon) {
+                    <i [ngClass]="icon" class="text-2xl text-primary"></i>
+                }
+                <h1 class="m-0 break-words text-2xl font-bold text-surface-900 dark:text-surface-0">
+                    {{ title }}
+                </h1>
+            </div>
+
+            @if (subtitle) {
+                <p class="m-0 text-sm text-muted-color">
+                    {{ subtitle }}
+                </p>
+            }
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+            <ng-content></ng-content>
+        </div>
+    </div>
+</header>

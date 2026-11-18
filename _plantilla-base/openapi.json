@@ -1,0 +1,1540 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "SGVTI API - Sistema de Registro y Control de Visitantes y Turnos",
+    "description": "Especificación nativa OpenAPI 3.1.0 para la gestión de visitantes y turnos de atención de las Inspectorías del Trabajo.",
+    "version": "v1 (OpenAPI 3.1.0)"
+  },
+  "servers": [
+    {
+      "url": "http://172.17.1.83/"
+    }
+  ],
+  "paths": {
+    "/api/Turnos": {
+      "get": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Consulta los turnos del día con filtros opcionales de sala y estado.",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "description": "Fecha a consultar (formato AAAA-MM-DD, por defecto hoy).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sala",
+            "in": "query",
+            "description": "Filtrar por nombre de sala.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "description": "Filtrar por estado del turno.",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoTurno"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de turnos correspondientes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfIReadOnlyListOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Registra la llegada de un visitante y genera su número de turno correlativo.",
+        "requestBody": {
+          "description": "Token de cancelación.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoCreateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoCreateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoCreateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}": {
+      "get": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Obtiene un turno específico por su identificador.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del turno.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/cola-espera": {
+      "get": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Visualiza la cola de turnos en espera para ser llamados, ordenados por prioridad y llegada.",
+        "parameters": [
+          {
+            "name": "sala",
+            "in": "query",
+            "description": "Filtro opcional por sala de atención.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de turnos pendientes en sala.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfIReadOnlyListOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/pantalla-publica": {
+      "get": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Endpoint optimizado para la pantalla pública de llamados en salas de espera.\nNo incluye datos personales confidenciales del ciudadano.",
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "description": "Cantidad máxima de últimos llamados a mostrar (por defecto 10).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de turnos convocados y en atención.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfIReadOnlyListOfTurnoPublicoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/resumen-diario": {
+      "get": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Obtiene indicadores y estadísticas operativas de la jornada actual (turnos emitidos, atendidos, pendientes, etc.).",
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "description": "Fecha opcional a evaluar.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen diario de atención.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfResumenDiarioDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}/llamar": {
+      "put": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Permite al funcionario de sala convocar o llamar a un turno en espera.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del turno a llamar.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token de cancelación.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoLlamarDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoLlamarDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoLlamarDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}/iniciar": {
+      "put": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Registra el inicio efectivo de la atención cuando el ciudadano se presenta ante el funcionario.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del turno.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "funcionario",
+            "in": "query",
+            "description": "Nombre opcional del funcionario que atiende.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}/finalizar": {
+      "put": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Registra la finalización de la atención del trámite.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del turno.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "observaciones",
+            "in": "query",
+            "description": "Observaciones o notas de culminación.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}/no-presentado": {
+      "put": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Deja constancia de que el visitante no acudió al llamado del funcionario.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del turno.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "observaciones",
+            "in": "query",
+            "description": "Justificación o notas de la no presentación.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}/cambiar-estado": {
+      "put": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Transiciona el turno a un estado específico dentro del flujo de atención.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del turno.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token de cancelación.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoCambiarEstadoDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoCambiarEstadoDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TurnoCambiarEstadoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Turnos/{id}/transferir": {
+      "post": {
+        "tags": [
+          "Turnos"
+        ],
+        "summary": "Reasigna o transfiere el turno a otra sala de atención, conservando la trazabilidad.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del turno a transferir.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "nuevaSala",
+            "in": "query",
+            "description": "Nombre de la sala de destino.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "motivo",
+            "in": "query",
+            "description": "Motivo o justificación del traslado.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "funcionario",
+            "in": "query",
+            "description": "Funcionario que autoriza el traslado.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfTurnoResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Visitantes": {
+      "get": {
+        "tags": [
+          "Visitantes"
+        ],
+        "summary": "Consulta o busca visitantes por documento, nombres o apellidos.",
+        "parameters": [
+          {
+            "name": "busqueda",
+            "in": "query",
+            "description": "Término de búsqueda opcional.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de visitantes coincidentes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfIReadOnlyListOfVisitanteResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Visitantes"
+        ],
+        "summary": "Registra un nuevo visitante en el sistema.",
+        "requestBody": {
+          "description": "Token de cancelación.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitanteCreateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitanteCreateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitanteCreateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Visitantes/{id}": {
+      "get": {
+        "tags": [
+          "Visitantes"
+        ],
+        "summary": "Obtiene un visitante por su identificador primario.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del visitante.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Visitantes"
+        ],
+        "summary": "Actualiza los datos personales de un visitante existente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del visitante a modificar.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Token de cancelación.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitanteUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitanteUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisitanteUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Visitantes"
+        ],
+        "summary": "Elimina un visitante si no posee turnos asociados.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador del visitante.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfboolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfboolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Visitantes/documento/{documento}": {
+      "get": {
+        "tags": [
+          "Visitantes"
+        ],
+        "summary": "Obtiene los datos de un visitante mediante su documento de identidad (ej. V-12345678).",
+        "parameters": [
+          {
+            "name": "documento",
+            "in": "path",
+            "description": "Cédula o número de documento.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfVisitanteResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponseOfboolean": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "ApiResponseOfIReadOnlyListOfTurnoPublicoDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/TurnoPublicoDto"
+            }
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "ApiResponseOfIReadOnlyListOfTurnoResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/TurnoResponseDto"
+            }
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "ApiResponseOfIReadOnlyListOfVisitanteResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/VisitanteResponseDto"
+            }
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "ApiResponseOfResumenDiarioDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResumenDiarioDto"
+              }
+            ]
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "ApiResponseOfTurnoResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TurnoResponseDto"
+              }
+            ]
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "ApiResponseOfVisitanteResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VisitanteResponseDto"
+              }
+            ]
+          },
+          "errors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Envoltorio estándar para respuestas unificadas de la API."
+      },
+      "EstadoTurno": {
+        "type": "integer",
+        "description": "Catálogo de estados controlados para el flujo de atención del turno."
+      },
+      "ResumenDiarioDto": {
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalTurnos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enEspera": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "llamados": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "enAtencion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "atendidos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "noPresentados": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "cancelados": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "turnosPorSala": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        },
+        "description": "Indicadores y métricas operativas del día en curso."
+      },
+      "TurnoCambiarEstadoDto": {
+        "required": [
+          "nuevoEstado"
+        ],
+        "type": "object",
+        "properties": {
+          "nuevoEstado": {
+            "description": "Nuevo estado al que transiciona el turno.",
+            "$ref": "#/components/schemas/EstadoTurno"
+          },
+          "funcionario": {
+            "maxLength": 150,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Funcionario que ejecuta o confirma la acción."
+          },
+          "observaciones": {
+            "maxLength": 500,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Observaciones, motivos o incidencias (ej. motivo de no presentación, reprogramación, notas finales)."
+          }
+        },
+        "description": "Modelo para registrar transiciones de estado en el flujo del turno\n(ej. Iniciar atención, Atendido, No presentado, Cancelado)."
+      },
+      "TurnoCreateDto": {
+        "required": [
+          "sala",
+          "motivoVisita"
+        ],
+        "type": "object",
+        "properties": {
+          "visitanteId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Identificador del visitante si ya está registrado en el sistema.",
+            "format": "int64"
+          },
+          "documento": {
+            "maxLength": 30,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Documento de identidad del visitante (requerido si VisitanteId no es provisto)."
+          },
+          "nombres": {
+            "maxLength": 100,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Nombres del visitante (requerido si VisitanteId no es provisto)."
+          },
+          "apellidos": {
+            "maxLength": 100,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Apellidos del visitante (requerido si VisitanteId no es provisto)."
+          },
+          "telefono": {
+            "maxLength": 30,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Teléfono de contacto opcional."
+          },
+          "correoElectronico": {
+            "maxLength": 120,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Correo electrónico opcional."
+          },
+          "sala": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Sala o taquilla de atención asignada por el receptor (ej. Sala 01, Sala 02 - Reclamos)."
+          },
+          "motivoVisita": {
+            "maxLength": 150,
+            "type": "string",
+            "description": "Motivo de la visita o tipo de atención requerida."
+          },
+          "prioridad": {
+            "type": "boolean",
+            "description": "Indica si el caso es de atención preferencial."
+          },
+          "observaciones": {
+            "maxLength": 500,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Observaciones iniciales registradas en recepción."
+          }
+        },
+        "description": "Modelo de datos para registrar un turno.\nPermite asociar un visitante existente o registrar sus datos personales de forma simultánea."
+      },
+      "TurnoLlamarDto": {
+        "required": [
+          "funcionario"
+        ],
+        "type": "object",
+        "properties": {
+          "funcionario": {
+            "maxLength": 150,
+            "type": "string",
+            "description": "Nombre o identificador del funcionario que convoca al visitante."
+          },
+          "observaciones": {
+            "maxLength": 500,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Observaciones opcionales del llamado."
+          }
+        },
+        "description": "Modelo para registrar la convocatoria (llamado) de un turno por parte de un funcionario."
+      },
+      "TurnoPublicoDto": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "sala": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "horaLlamado": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "prioridad": {
+            "type": "boolean"
+          }
+        },
+        "description": "Modelo optimizado para pantallas públicas de llamado en salas de espera.\nPor privacidad y seguridad, no expone datos personales sensibles del ciudadano."
+      },
+      "TurnoResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "numero": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "fechaTurno": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horaLlamado": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "horaInicioAtencion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "horaFinalizacion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoTurno"
+          },
+          "estadoDescripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "prioridad": {
+            "type": "boolean"
+          },
+          "motivoVisita": {
+            "type": "string"
+          },
+          "sala": {
+            "type": "string"
+          },
+          "funcionario": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "observaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "visitanteId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "documentoVisitante": {
+            "type": "string"
+          },
+          "nombreVisitante": {
+            "type": "string"
+          }
+        },
+        "description": "Modelo de respuesta con el detalle integral del turno."
+      },
+      "VisitanteCreateDto": {
+        "required": [
+          "documento",
+          "nombres",
+          "apellidos"
+        ],
+        "type": "object",
+        "properties": {
+          "documento": {
+            "maxLength": 30,
+            "type": "string"
+          },
+          "nombres": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "apellidos": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "telefono": {
+            "maxLength": 30,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correoElectronico": {
+            "maxLength": 120,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Modelo de datos para la creación de un visitante."
+      },
+      "VisitanteResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "documento": {
+            "type": "string"
+          },
+          "nombres": {
+            "type": "string"
+          },
+          "apellidos": {
+            "type": "string"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "telefono": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correoElectronico": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalTurnos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Modelo de respuesta con la información detallada del visitante."
+      },
+      "VisitanteUpdateDto": {
+        "required": [
+          "nombres",
+          "apellidos"
+        ],
+        "type": "object",
+        "properties": {
+          "nombres": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "apellidos": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "telefono": {
+            "maxLength": 30,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correoElectronico": {
+            "maxLength": 120,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Modelo de datos para la actualización de un visitante existente."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Turnos"
+    },
+    {
+      "name": "Visitantes"
+    }
+  ]
+}

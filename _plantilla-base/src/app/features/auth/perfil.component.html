@@ -1,0 +1,103 @@
+<div class="max-w-6xl mx-auto">
+    <app-page-header
+        icon="pi pi-user"
+        eyebrow="Cuenta"
+        title="Mi perfil"
+        subtitle="Consulta tus datos personales y administra las opciones de acceso." />
+
+    <div *ngIf="cargando()" class="card mt-6" role="status" aria-label="Cargando perfil">
+        <div class="flex items-center gap-4 mb-8">
+            <div class="w-16 h-16 rounded-full bg-surface-200 dark:bg-surface-700 animate-pulse"></div>
+            <div class="flex-1 space-y-3">
+                <div class="h-4 w-40 rounded bg-surface-200 dark:bg-surface-700 animate-pulse"></div>
+                <div class="h-3 w-56 rounded bg-surface-200 dark:bg-surface-700 animate-pulse"></div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div *ngFor="let item of [1, 2, 3]" class="space-y-2">
+                <div class="h-3 w-24 rounded bg-surface-200 dark:bg-surface-700 animate-pulse"></div>
+                <div class="h-5 w-40 rounded bg-surface-200 dark:bg-surface-700 animate-pulse"></div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="mensajeError()" class="card mt-6 border border-red-200 dark:border-red-900/50" role="alert">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <i class="pi pi-exclamation-circle text-red-600 dark:text-red-400 text-xl mt-0.5"></i>
+                <div>
+                    <h2 class="m-0 font-semibold text-surface-900 dark:text-surface-0">No se pudo cargar el perfil</h2>
+                    <p class="m-0 mt-1 text-sm text-muted-color">{{ mensajeError() }}</p>
+                </div>
+            </div>
+            <p-button label="Reintentar" icon="pi pi-refresh" severity="secondary" [outlined]="true" (onClick)="cargarPerfil()" />
+        </div>
+    </div>
+
+    <ng-container *ngIf="!cargando() && !mensajeError() && perfil() as usuario">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-6">
+            <section class="card lg:col-span-2">
+                <div class="flex items-center gap-4 pb-6 border-b border-surface-200 dark:border-surface-700">
+                    <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
+                        {{ iniciales(usuario) }}
+                    </div>
+                    <div>
+                        <h2 class="m-0 text-lg font-semibold text-surface-900 dark:text-surface-0">Datos personales</h2>
+                        <p class="m-0 mt-1 text-sm text-muted-color">Información asociada a tu cuenta.</p>
+                    </div>
+                </div>
+
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 pt-6">
+                    <div>
+                        <dt class="text-xs uppercase tracking-wide text-muted-color">Nombre(s)</dt>
+                        <dd class="m-0 mt-2 font-medium text-surface-900 dark:text-surface-0">{{ nombres(usuario) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase tracking-wide text-muted-color">Apellido(s)</dt>
+                        <dd class="m-0 mt-2 font-medium text-surface-900 dark:text-surface-0">{{ apellidos(usuario) }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-xs uppercase tracking-wide text-muted-color">Documento de identidad</dt>
+                        <dd class="m-0 mt-2 font-medium font-mono text-surface-900 dark:text-surface-0">{{ usuario.cedulaCompleta || '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs uppercase tracking-wide text-muted-color">Cuenta creada</dt>
+                        <dd class="m-0 mt-2 font-medium text-surface-900 dark:text-surface-0">{{ usuario.dfechaCreacion ? (usuario.dfechaCreacion | date: 'dd/MM/yyyy') : '—' }}</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="card">
+                <div class="flex items-center gap-3 mb-5">
+                    <i class="pi pi-shield text-primary text-xl"></i>
+                    <h2 class="m-0 text-lg font-semibold text-surface-900 dark:text-surface-0">Acceso y seguridad</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="m-0 text-xs uppercase tracking-wide text-muted-color">Rol</p>
+                        <p class="m-0 mt-1 font-medium text-surface-900 dark:text-surface-0">{{ usuario.nombreRol || '—' }}</p>
+                    </div>
+                    <div>
+                        <p class="m-0 text-xs uppercase tracking-wide text-muted-color">Estado de la cuenta</p>
+                        <span
+                            class="inline-flex items-center gap-2 mt-2 text-sm font-medium"
+                            [ngClass]="usuario.benabled ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'">
+                            <span class="w-2 h-2 rounded-full" [ngClass]="usuario.benabled ? 'bg-green-500' : 'bg-red-500'"></span>
+                            {{ usuario.benabled ? 'Activa' : 'Inactiva' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-5 border-t border-surface-200 dark:border-surface-700">
+                    <p class="m-0 mb-4 text-sm text-muted-color">Mantén tu acceso protegido con una contraseña personal.</p>
+                    <p-button
+                        routerLink="/app/cambiar-contrasena"
+                        label="Cambiar contraseña"
+                        icon="pi pi-key"
+                        styleClass="w-full justify-center" />
+                </div>
+            </section>
+        </div>
+    </ng-container>
+</div>

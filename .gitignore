@@ -1,0 +1,17 @@
+/sistemas/
+**/node_modules/
+**/dist/
+**/coverage/
+**/bin/
+**/obj/
+**/publish/
+**/TestResults/
+**/.angular/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.sqlite
+**/*.sqlite3

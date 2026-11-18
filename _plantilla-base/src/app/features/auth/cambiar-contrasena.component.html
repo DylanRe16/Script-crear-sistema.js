@@ -1,0 +1,149 @@
+
+<div class="max-w-6xl mx-auto">
+    <app-page-header
+        icon="pi pi-lock"
+        eyebrow="Seguridad de la Cuenta"
+        title="Cambia tu contraseña"
+        subtitle="Actualiza tus credenciales periódicamente para mantener protegida tu cuenta institucional." />
+
+    <div class="mt-6 grid grid-cols-12 gap-6 items-start">
+        <section class="col-span-12 lg:col-span-7">
+            <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 shadow-sm overflow-hidden">
+                <div class="border-b border-surface-100 dark:border-surface-800 px-6 py-5 md:px-8">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <i class="pi pi-key text-lg"></i>
+                        </span>
+                        <div>
+                            <h2 class="text-lg font-bold text-surface-900 dark:text-surface-0 m-0">Actualizar credenciales</h2>
+                            <p class="text-xs text-muted-color mt-1 mb-0">Completa los tres campos para confirmar el cambio.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 md:p-8">
+                    <div *ngIf="mensajeExito" role="status" class="mb-6 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
+                        <i class="pi pi-check-circle mt-0.5 text-lg"></i>
+                        <span>{{ mensajeExito }}</span>
+                    </div>
+                    <div *ngIf="mensajeError" role="alert" class="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                        <i class="pi pi-exclamation-circle mt-0.5 text-lg"></i>
+                        <span>{{ mensajeError }}</span>
+                    </div>
+
+                    <form [formGroup]="passwordForm" (ngSubmit)="cambiarContrasena()" class="flex flex-col gap-5">
+                        <div>
+                            <label for="currentPassword" class="block text-sm font-semibold text-surface-800 dark:text-surface-200 mb-2">Contraseña actual</label>
+                            <p-password
+                                inputId="currentPassword"
+                                formControlName="currentPassword"
+                                placeholder="Escribe tu contraseña actual"
+                                [feedback]="false"
+                                [toggleMask]="true"
+                                styleClass="w-full"
+                                inputStyleClass="w-full" />
+                            <small *ngIf="passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.hasError('required')" class="text-red-500 block mt-1.5">
+                                Ingresa tu contraseña actual.
+                            </small>
+                        </div>
+
+                        <div>
+                            <label for="newPassword" class="block text-sm font-semibold text-surface-800 dark:text-surface-200 mb-2">Nueva contraseña</label>
+                            <p-password
+                                inputId="newPassword"
+                                formControlName="newPassword"
+                                placeholder="Crea una contraseña segura"
+                                [feedback]="false"
+                                [toggleMask]="true"
+                                styleClass="w-full"
+                                inputStyleClass="w-full" />
+                            <small *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.hasError('required')" class="text-red-500 block mt-1.5">
+                                Ingresa una nueva contraseña.
+                            </small>
+                            <small *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.hasError('pattern')" class="text-red-500 block mt-1.5">
+                                Debe incluir al menos una mayúscula, una minúscula y un número.
+                            </small>
+                            <small *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.hasError('minlength')" class="text-red-500 block mt-1.5">
+                                Debe tener al menos 6 caracteres.
+                            </small>
+                            <small *ngIf="passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.hasError('maxlength')" class="text-red-500 block mt-1.5">
+                                No puede superar los 100 caracteres.
+                            </small>
+                        </div>
+
+                        <div>
+                            <label for="confirmNewPassword" class="block text-sm font-semibold text-surface-800 dark:text-surface-200 mb-2">Confirma la nueva contraseña</label>
+                            <p-password
+                                inputId="confirmNewPassword"
+                                formControlName="confirmNewPassword"
+                                placeholder="Vuelve a escribir la nueva contraseña"
+                                [feedback]="false"
+                                [toggleMask]="true"
+                                styleClass="w-full"
+                                inputStyleClass="w-full" />
+                            <small *ngIf="passwordForm.controls.confirmNewPassword.touched && passwordForm.controls.confirmNewPassword.hasError('required')" class="text-red-500 block mt-1.5">
+                                Confirma la nueva contraseña.
+                            </small>
+                            <small *ngIf="passwordForm.controls.confirmNewPassword.touched && passwordForm.hasError('passwordsMismatch')" class="text-red-500 block mt-1.5">
+                                Las contraseñas no coinciden.
+                            </small>
+                        </div>
+
+                        <div class="border-t border-surface-100 dark:border-surface-800 pt-5">
+                            <p-button
+                                type="submit"
+                                label="Guardar nueva contraseña"
+                                icon="pi pi-check"
+                                [loading]="cargando"
+                                [disabled]="cargando"
+                                styleClass="w-full justify-center font-bold" />
+                            <p class="flex items-center justify-center gap-2 text-xs text-muted-color mt-4 mb-0">
+                                <i class="pi pi-lock"></i> Tu contraseña se transmite de forma segura.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <aside class="col-span-12 lg:col-span-5">
+            <div class="rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/20 p-6 md:p-7">
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 mb-4">
+                    <i class="pi pi-info-circle text-xl"></i>
+                </div>
+                <h2 class="text-lg font-bold text-surface-900 dark:text-surface-0 mb-2">Una contraseña segura</h2>
+                <p class="text-sm leading-relaxed text-muted-color mb-6">
+                    Para aceptar el cambio, la nueva contraseña debe cumplir con estos requisitos:
+                </p>
+
+                <ul class="flex flex-col gap-4 list-none p-0 m-0">
+                    <li class="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                        <i class="pi pi-check-circle text-primary mt-0.5"></i>
+                        <span>Al menos <strong>6 caracteres</strong></span>
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                        <i class="pi pi-check-circle text-primary mt-0.5"></i>
+                        <span>Una letra <strong>mayúscula</strong> y una <strong>minúscula</strong></span>
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                        <i class="pi pi-check-circle text-primary mt-0.5"></i>
+                        <span>Al menos un <strong>número</strong></span>
+                    </li>
+                    <li class="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                        <i class="pi pi-check-circle text-primary mt-0.5"></i>
+                        <span>Un máximo de <strong>100 caracteres</strong></span>
+                    </li>
+                </ul>
+
+                <div class="mt-7 rounded-xl border border-blue-100 dark:border-blue-900/60 bg-white/70 dark:bg-surface-900/50 p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="pi pi-lightbulb text-amber-500 mt-0.5"></i>
+                        <p class="text-xs leading-relaxed text-muted-color m-0">
+                            Evita reutilizar contraseñas de otros servicios y no la compartas con otras personas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

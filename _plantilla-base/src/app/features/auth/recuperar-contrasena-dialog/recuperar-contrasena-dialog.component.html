@@ -1,0 +1,187 @@
+<p-dialog
+    [visible]="visible"
+    (visibleChange)="onVisibleChange($event)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '92vw', maxWidth: '580px' }"
+    header="Recuperar contraseña">
+    @if (paso() === 1) {
+        <div class="flex flex-col gap-4">
+            <div class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+                <i class="pi pi-info-circle mr-1"></i>
+                Ingrese su documento de identidad para consultar las preguntas de seguridad configuradas en su cuenta.
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-medium text-surface-900 dark:text-surface-0">
+                    Documento de Identidad <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-12 gap-2">
+                    <div class="col-span-4">
+                        <p-select
+                            [(ngModel)]="snacionalidad"
+                            name="recuperacionNacionalidad"
+                            [options]="opcionesNacionalidad"
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Tipo"
+                            styleClass="w-full" />
+                    </div>
+                    <div class="col-span-8">
+                        <input
+                            id="recuperacionCedula"
+                            type="text"
+                            pInputText
+                            [(ngModel)]="ncedulaIdentStr"
+                            name="recuperacionCedula"
+                            (input)="onCedulaInput($event)"
+                            maxlength="9"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="Ej: 100000001"
+                            class="w-full" />
+                    </div>
+                </div>
+                <small class="mt-1 block text-[11px] text-muted-color">Solo dígitos numéricos (hasta 9 dígitos).</small>
+            </div>
+
+            @if (mensajeError()) {
+                <div class="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+                    <i class="pi pi-exclamation-circle mt-0.5"></i>
+                    <span>{{ mensajeError() }}</span>
+                </div>
+            }
+
+            <div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 dark:border-surface-700 sm:flex-row sm:justify-end">
+                <p-button type="button" label="Cancelar" icon="pi pi-times" severity="secondary" [outlined]="true" [disabled]="cargando()" (onClick)="cerrar()" />
+                <p-button type="button" label="Buscar mis preguntas" icon="pi pi-search" [loading]="cargando()" [disabled]="cargando()" (onClick)="buscarPreguntas()" />
+            </div>
+        </div>
+    } @else if (paso() === 2) {
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs text-surface-800 dark:text-surface-200">
+                <i class="pi pi-shield text-primary"></i>
+                <span>Responda correctamente las {{ totalPreguntas() }} preguntas de seguridad seleccionadas.</span>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                @for (pregunta of preguntas(); track pregunta.idPreguntaSeg) {
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-surface-900 dark:text-surface-0" [attr.for]="'recuperacion-respuesta-' + pregunta.idPreguntaSeg">
+                            {{ pregunta.sdescripcion }} <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            pInputText
+                            type="text"
+                            [id]="'recuperacion-respuesta-' + pregunta.idPreguntaSeg"
+                            [ngModel]="respuestas()[pregunta.idPreguntaSeg] ?? ''"
+                            (ngModelChange)="setRespuesta(pregunta.idPreguntaSeg, $event)"
+                            [name]="'recuperacion-respuesta-' + pregunta.idPreguntaSeg"
+                            maxlength="200"
+                            autocomplete="off"
+                            placeholder="Escriba su respuesta"
+                            class="w-full"
+                            [class.ng-invalid]="respuestaInvalida(pregunta.idPreguntaSeg)"
+                            [class.ng-dirty]="respuestaInvalida(pregunta.idPreguntaSeg)" />
+                        @if (respuestaInvalida(pregunta.idPreguntaSeg)) {
+                            <small class="mt-1 block text-[11px] text-red-500">La respuesta debe tener entre 2 y 200 caracteres.</small>
+                        }
+                    </div>
+                }
+            </div>
+
+            <small class="block text-[11px] text-muted-color">
+                Si alguna respuesta es incorrecta, se generarán nuevas preguntas aleatorias para que reintente.
+            </small>
+
+            @if (mensajeError()) {
+                <div class="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+                    <i class="pi pi-exclamation-circle mt-0.5"></i>
+                    <span>{{ mensajeError() }}</span>
+                </div>
+            }
+
+            <div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 dark:border-surface-700 sm:flex-row sm:justify-between">
+                <p-button type="button" label="Atrás" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" [disabled]="cargando()" (onClick)="volverPasoAnterior()" />
+                <p-button type="button" label="Validar respuestas" icon="pi pi-check" [loading]="cargando()" [disabled]="cargando() || !respuestasCompletas" (onClick)="validarRespuestas()" />
+            </div>
+        </div>
+    } @else if (paso() === 3) {
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+                <i class="pi pi-check-circle"></i>
+                <span>Respuestas validadas. Defina su nueva contraseña.</span>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="recuperacionNewPassword" class="mb-2 block text-sm font-medium text-surface-900 dark:text-surface-0">
+                        Nueva contraseña <span class="text-red-500">*</span>
+                    </label>
+                    <p-password
+                        id="recuperacionNewPassword"
+                        [(ngModel)]="newPassword"
+                        name="recuperacionNewPassword"
+                        [feedback]="false"
+                        [toggleMask]="true"
+                        placeholder="••••••••"
+                        styleClass="w-full"
+                        inputStyleClass="w-full" />
+                </div>
+                <div>
+                    <label for="recuperacionConfirmPassword" class="mb-2 block text-sm font-medium text-surface-900 dark:text-surface-0">
+                        Confirmar contraseña <span class="text-red-500">*</span>
+                    </label>
+                    <p-password
+                        id="recuperacionConfirmPassword"
+                        [(ngModel)]="confirmNewPassword"
+                        name="recuperacionConfirmPassword"
+                        [feedback]="false"
+                        [toggleMask]="true"
+                        placeholder="••••••••"
+                        styleClass="w-full"
+                        inputStyleClass="w-full" />
+                </div>
+            </div>
+
+            <small class="block text-[11px] text-muted-color">
+                La contraseña debe tener al menos 6 caracteres, una mayúscula, una minúscula y un número.
+            </small>
+
+            @if (intentoEnvio() && !passwordValida) {
+                <small class="block text-[11px] text-red-500">La nueva contraseña no cumple con los requisitos de seguridad.</small>
+            }
+            @if (intentoEnvio() && !confirmacionValida) {
+                <small class="block text-[11px] text-red-500">La confirmación no coincide con la nueva contraseña.</small>
+            }
+
+            @if (mensajeError()) {
+                <div class="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+                    <i class="pi pi-exclamation-circle mt-0.5"></i>
+                    <span>{{ mensajeError() }}</span>
+                </div>
+            }
+
+            <div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 dark:border-surface-700 sm:flex-row sm:justify-between">
+                <p-button type="button" label="Atrás" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" [disabled]="cargando()" (onClick)="volverPasoAnterior()" />
+                <p-button type="button" label="Restablecer contraseña" icon="pi pi-lock-open" [loading]="cargando()" [disabled]="cargando()" (onClick)="restablecerPassword()" />
+            </div>
+        </div>
+    } @else {
+        <div class="flex flex-col items-center gap-4 py-3 text-center">
+            <span class="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300">
+                <i class="pi pi-check-circle text-3xl"></i>
+            </span>
+
+            <div>
+                <h2 class="mb-1 text-lg font-bold text-surface-900 dark:text-surface-0">Contraseña restablecida</h2>
+                <p class="m-0 text-sm text-muted-color">
+                    Su contraseña fue actualizada correctamente. Ya puede iniciar sesión con sus nuevas credenciales.
+                </p>
+            </div>
+
+            <p-button type="button" label="Volver al inicio de sesión" icon="pi pi-sign-in" styleClass="w-full justify-center font-bold" (onClick)="cerrar()" />
+        </div>
+    }
+</p-dialog>

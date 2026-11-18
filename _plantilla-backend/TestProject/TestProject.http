@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:5136/PlantillaBackend/api
+
+### OpenAPI
+GET {{baseUrl}}/openapi/v1.json
+Accept: application/json
+
+### Login como administrador semilla
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "snacionalidad": "V",
+  "ncedulaIdent": 12345678,
+  "password": "Admin123!"
+}
+
+@authToken = {{login.response.body.token}}
+@adminUserId = {{login.response.body.funcionario.idFuncionario}}
+
+### Consultar roles para asignarlos a una cuenta
+GET {{baseUrl}}/roles
+Authorization: Bearer {{authToken}}
+
+### Listar todas las cuentas
+GET {{baseUrl}}/funcionarios?soloActivos=false
+Authorization: Bearer {{authToken}}
+
+### Consultar una cuenta
+GET {{baseUrl}}/funcionarios/1
+Authorization: Bearer {{authToken}}
+
+### Registrar una cuenta desde el área administrativa
+# Usa un documento único y un rol activo devuelto por GET /roles.
+# @name createUser
+POST {{baseUrl}}/auth/register
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "snacionalidad": "V",
+  "ncedulaIdent": 22123456,
+  "sprimerNombre": "Usuario",
+  "sprimerApellido": "Plantilla",
+  "password": "Usuario123",
+  "confirmPassword": "Usuario123",
+  "rolId": 2
+}
+
+@createdUserId = {{createUser.response.body.funcionario.idFuncionario}}
+
+### Actualizar datos, rol y estado de la cuenta creada
+PUT {{baseUrl}}/funcionarios/{{createdUserId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "sprimerNombre": "Usuario",
+  "ssegundoNombre": null,
+  "sprimerApellido": "Plantilla",
+  "ssegundoApellido": null,
+  "rolId": 2,
+  "benabled": true
+}
+
+### Restablecer la contraseña de la cuenta creada a la temporal configurada en el backend
+POST {{baseUrl}}/funcionarios/{{createdUserId}}/restablecer-contrasena
+Authorization: Bearer {{authToken}}
+
+### Eliminar las preguntas de seguridad de la cuenta creada
+POST {{baseUrl}}/funcionarios/{{createdUserId}}/restablecer-preguntas-seguridad
+Authorization: Bearer {{authToken}}
+
+### Las acciones administrativas sobre la propia cuenta deben responder 403
+POST {{baseUrl}}/funcionarios/{{adminUserId}}/restablecer-preguntas-seguridad
+Authorization: Bearer {{authToken}}
+
+### Verificar que la consulta administrativa requiere autenticación
+GET {{baseUrl}}/funcionarios
