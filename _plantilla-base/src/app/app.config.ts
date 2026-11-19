@@ -9,7 +9,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { appRoutes } from './app.routes';
 import { jwtInterceptor } from './core/http/jwt.interceptor';
 
-const SrcvBluePreset = definePreset(Aura, {
+const SakaiPreset = definePreset(Aura, {
     semantic: {
         primary: {
             50: '{blue.50}',
@@ -36,7 +36,7 @@ export const appConfig: ApplicationConfig = {
         ),
         provideHttpClient(withFetch(), withInterceptors([jwtInterceptor])),
         provideAnimationsAsync(),
-        providePrimeNG({ theme: { preset: SrcvBluePreset, options: { darkModeSelector: '.app-dark' } } }),
+        providePrimeNG({ theme: { preset: SakaiPreset, options: { darkModeSelector: '.app-dark' } } }),
         MessageService,
         ConfirmationService
     ]

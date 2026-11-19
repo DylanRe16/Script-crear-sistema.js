@@ -17,15 +17,16 @@ Desde la raíz:
 node .\crear-sistema.js
 ```
 
-El nombre debe ser un slug de letras minúsculas, números y guiones, debe comenzar con letra y tiene un máximo de 54 caracteres. El generador lo utiliza para el nombre del proyecto y la carpeta de frontend. La carpeta de backend se llama `<nombre>-api`.
+El nombre debe ser un slug de letras minúsculas, números y guiones, debe comenzar con letra y tiene un máximo de 54 caracteres. El generador lo utiliza para el nombre del proyecto y la carpeta de frontend, y lo muestra con espacios y mayúsculas iniciales en la interfaz (por ejemplo, `sistema-ventas` se muestra como **Sistema Ventas**). La carpeta de backend se llama `<nombre>-api`.
 
 Preguntas del asistente:
 
 1. Nombre del sistema.
-2. Si se debe generar el backend.
-3. Origen del backend para el proxy, por defecto `http://localhost:5136`.
-4. Si se genera backend: esquema/base de datos, host, puerto, usuario, contraseña y PathBase.
-5. Si solo se genera frontend: PathBase del backend existente.
+2. Color primario de Sakai (azul por defecto; también verde, esmeralda, turquesa, cian, índigo, violeta, morado, rosa, rojo o naranja).
+3. Si se debe generar el backend.
+4. Origen del backend para el proxy, por defecto `http://localhost:5136`.
+5. Si se genera backend: esquema/base de datos, host, puerto, usuario, contraseña y PathBase.
+6. Si solo se genera frontend: PathBase del backend existente.
 
 La contraseña de PostgreSQL se enmascara en terminales interactivas. Si se ejecuta sin una terminal interactiva, la entrada estándar no puede ocultarse. La contraseña nunca se escribe en la salida de consola; se guarda en el `.env` local generado.
 
@@ -42,6 +43,7 @@ sistemas/
 En el frontend:
 
 - Actualiza el nombre del paquete y el identificador de proyecto Angular.
+- Reemplaza el nombre visible «Portal» por el nombre del sistema y aplica el color Sakai elegido a PrimeNG y los estilos globales.
 - Actualiza las claves `localStorage` que usan el prefijo `sgvti_`.
 - Configura `proxy.conf.json` o `proxy.config.json` con la regla `/api`, `target`, `secure: false`, `changeOrigin: true`, `pathRewrite` y `logLevel: debug`.
 - Asegura que `npm start` use `--proxy-config`.

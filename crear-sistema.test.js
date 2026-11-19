@@ -8,11 +8,14 @@ const test = require('node:test');
 
 const {
   actualizarContenidoEnv,
+  actualizarIdentidadFrontend,
   actualizarProxyConfig,
+  actualizarTemaSakai,
   copiarCarpeta,
   crearCadenaConexion,
   debeIgnorar,
   normalizarApiTarget,
+  normalizarColorSakai,
   normalizarNombreSistema,
   normalizarRutaBase,
   validarIdentificadorPostgres
@@ -23,6 +26,35 @@ test('normaliza nombres de sistema y rechaza nombres inseguros o demasiado largo
   assert.throws(() => normalizarNombreSistema('../mi-sistema'));
   assert.throws(() => normalizarNombreSistema('a'.repeat(55)));
   assert.throws(() => normalizarNombreSistema('con'));
+});
+
+test('normaliza colores Sakai disponibles y rechaza opciones inválidas', () => {
+  assert.equal(normalizarColorSakai('1'), 'blue');
+  assert.equal(normalizarColorSakai('Teal'), 'teal');
+  assert.throws(() => normalizarColorSakai('chartreuse'));
+});
+
+test('actualiza el nombre visible y el color Sakai en el frontend copiado', () => {
+  const directorio = fs.mkdtempSync(path.join(os.tmpdir(), 'crear-sistema-identidad-'));
+  const login = path.join(directorio, 'src', 'app', 'login.component.html');
+  const appConfig = path.join(directorio, 'src', 'app', 'app.config.ts');
+  const layoutService = path.join(directorio, 'src', 'app', 'layout', 'service', 'layout.service.ts');
+  try {
+    fs.mkdirSync(path.dirname(login), { recursive: true });
+    fs.mkdirSync(path.dirname(appConfig), { recursive: true });
+    fs.mkdirSync(path.dirname(layoutService), { recursive: true });
+    fs.writeFileSync(login, '<span>Portal</span><footer>Portal de autenticación</footer>');
+    fs.writeFileSync(appConfig, "primary: '{blue.50}'");
+    fs.writeFileSync(layoutService, "primary: 'blue'");
+
+    assert.equal(actualizarIdentidadFrontend(directorio, 'sistema-ventas'), 1);
+    assert.equal(actualizarTemaSakai(directorio, 'teal'), 'teal');
+    assert.equal(fs.readFileSync(login, 'utf8'), '<span>Sistema Ventas</span><footer>Sistema Ventas de autenticación</footer>');
+    assert.equal(fs.readFileSync(appConfig, 'utf8'), "primary: '{teal.50}'");
+    assert.equal(fs.readFileSync(layoutService, 'utf8'), "primary: 'teal'");
+  } finally {
+    fs.rmSync(directorio, { recursive: true, force: true });
+  }
 });
 
 test('valida PathBase, host de API e identificadores PostgreSQL', () => {

@@ -31,6 +31,20 @@ const DIRECTORIOS_IGNORADOS = new Set([
   'TestResults'
 ]);
 
+const COLORES_SAKAI = [
+  { numero: '1', nombre: 'Azul', valor: 'blue' },
+  { numero: '2', nombre: 'Verde', valor: 'green' },
+  { numero: '3', nombre: 'Esmeralda', valor: 'emerald' },
+  { numero: '4', nombre: 'Turquesa', valor: 'teal' },
+  { numero: '5', nombre: 'Cian', valor: 'cyan' },
+  { numero: '6', nombre: 'Índigo', valor: 'indigo' },
+  { numero: '7', nombre: 'Violeta', valor: 'violet' },
+  { numero: '8', nombre: 'Morado', valor: 'purple' },
+  { numero: '9', nombre: 'Rosa', valor: 'pink' },
+  { numero: '10', nombre: 'Rojo', valor: 'red' },
+  { numero: '11', nombre: 'Naranja', valor: 'orange' }
+];
+
 function esObjeto(valor) {
   return valor !== null && typeof valor === 'object' && !Array.isArray(valor);
 }
@@ -52,6 +66,15 @@ function normalizarNombreSistema(valor) {
   }
 
   return nombre;
+}
+
+function normalizarColorSakai(valor) {
+  const respuesta = String(valor || '').trim();
+  const color = COLORES_SAKAI.find((opcion) => opcion.numero === respuesta || opcion.valor === respuesta.toLowerCase());
+  if (!color) {
+    throw new Error(`Color Sakai no válido. Elige un número del 1 al ${COLORES_SAKAI.length}.`);
+  }
+  return color.valor;
 }
 
 function validarIdentificadorPostgres(valor, etiqueta) {
@@ -258,6 +281,31 @@ function actualizarAngularJson(rutaFront, nombre) {
   actualizarReferencias(proyecto);
   if (angular.defaultProject === nombreAnterior) angular.defaultProject = nombre;
   escribirJson(angularPath, angular);
+}
+
+function actualizarTemaSakai(rutaFront, color) {
+  const colorSakai = normalizarColorSakai(color);
+  const appConfigPath = path.join(rutaFront, 'src', 'app', 'app.config.ts');
+  const layoutServicePath = path.join(rutaFront, 'src', 'app', 'layout', 'service', 'layout.service.ts');
+  const appConfig = fs.readFileSync(appConfigPath, 'utf8');
+  const layoutService = fs.readFileSync(layoutServicePath, 'utf8');
+  if (!/\{blue\.\d+\}/.test(appConfig) || !/primary: 'blue'/.test(layoutService)) {
+    throw new Error('No se pudo aplicar el color Sakai; revisa la configuración de tema de la plantilla.');
+  }
+  const appConfigActualizado = appConfig.replace(/\{blue\./g, `{${colorSakai}.`);
+  const layoutServiceActualizado = layoutService.replace("primary: 'blue'", `primary: '${colorSakai}'`);
+
+  fs.writeFileSync(appConfigPath, appConfigActualizado, 'utf8');
+  fs.writeFileSync(layoutServicePath, layoutServiceActualizado, 'utf8');
+  return colorSakai;
+}
+
+function actualizarIdentidadFrontend(rutaFront, nombre) {
+  const nombreVisible = nombre
+    .split('-')
+    .map((segmento) => segmento.charAt(0).toUpperCase() + segmento.slice(1))
+    .join(' ');
+  return reemplazarEnCarpeta(rutaFront, 'Portal', nombreVisible, ['.html']);
 }
 
 function reemplazarPrefijoAlmacenamiento(rutaBase, prefijoAnterior, prefijoNuevo) {
@@ -531,6 +579,18 @@ async function preguntarSiNo(rl, texto, porDefecto = true) {
   }
 }
 
+async function preguntarColorSakai(rl) {
+  const opciones = COLORES_SAKAI.map(({ numero, nombre }) => `${numero}: ${nombre}`).join(', ');
+  while (true) {
+    const respuesta = (await preguntar(rl, `Color primario de Sakai (${opciones}) [1]: `)).trim() || '1';
+    try {
+      return normalizarColorSakai(respuesta);
+    } catch {
+      console.log(`Elige un número entre 1 y ${COLORES_SAKAI.length}.`);
+    }
+  }
+}
+
 function exigirArchivo(ruta) {
   if (!fs.existsSync(ruta) || !fs.statSync(ruta).isFile()) {
     throw new Error(`Falta un archivo requerido de la plantilla: ${ruta}`);
@@ -557,6 +617,7 @@ async function main() {
     const nombre = normalizarNombreSistema(
       await preguntar(rl, 'Nombre del nuevo sistema (slug; ej: sistema-ventas): ')
     );
+    const colorSakai = await preguntarColorSakai(rl);
     const generarBackend = await preguntarSiNo(rl, '¿Generar backend .NET? (s/n) [s]: ');
     const apiTarget = normalizarApiTarget(
       (await preguntar(rl, 'Host del backend [http://localhost:5136]: ')).trim() || 'http://localhost:5136'
@@ -628,10 +689,13 @@ async function main() {
     copiarCarpeta(RUTA_PLANTILLA_FRONT, rutaFront);
     actualizarPaqueteFrontend(rutaFront, nombre);
     actualizarAngularJson(rutaFront, nombre);
+    const textosActualizados = actualizarIdentidadFrontend(rutaFront, nombre);
+    actualizarTemaSakai(rutaFront, colorSakai);
     reemplazarEnArchivo(path.join(rutaFront, 'README.md'), '/PlantillaBackend/api', rutaBase);
     const cambiosAlmacenamiento = reemplazarPrefijoAlmacenamiento(rutaFront, 'sgvti_', `${nombre.replace(/-/g, '_')}_`);
     const proxyNombre = actualizarProxyConfig(rutaFront, apiTarget, rutaBase);
-    console.log(`Frontend preparado; ${cambiosAlmacenamiento} archivo(s) usan el prefijo localStorage del nuevo sistema.`);
+    console.log(`Frontend preparado con identidad "${nombre}" (${textosActualizados} texto(s) actualizados) y tema Sakai ${colorSakai}.`);
+    console.log(`${cambiosAlmacenamiento} archivo(s) usan el prefijo localStorage del nuevo sistema.`);
     console.log(`Proxy /api configurado en ${proxyNombre} con PathBase ${rutaBase}.`);
 
     let carpetaProyecto = null;
@@ -726,11 +790,14 @@ if (require.main === module) {
 
 module.exports = {
   actualizarContenidoEnv,
+  actualizarIdentidadFrontend,
   actualizarProxyConfig,
+  actualizarTemaSakai,
   copiarCarpeta,
   crearCadenaConexion,
   debeIgnorar,
   normalizarApiTarget,
+  normalizarColorSakai,
   normalizarNombreSistema,
   normalizarRutaBase,
   validarIdentificadorPostgres

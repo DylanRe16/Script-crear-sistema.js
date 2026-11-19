@@ -3,15 +3,15 @@
 @use './layout/layout.scss';
 @use 'primeicons/primeicons.css';
 
-/* Sakai Blue Theme Variables (SGVTI) */
+/* Sakai Theme Variables (SGVTI) */
 :root {
     color-scheme: light;
-    --sgvti-primary: #3B82F6;
-    --sgvti-primary-hover: #2563EB;
-    --sgvti-primary-light: #EFF6FF;
-    --sgvti-primary-dark: #1D4ED8;
-    --primary-color: #3B82F6;
-    --primary-color-text: #ffffff;
+    --sgvti-primary: var(--p-primary-color);
+    --sgvti-primary-hover: var(--p-primary-hover-color);
+    --sgvti-primary-light: var(--p-primary-50);
+    --sgvti-primary-dark: var(--p-primary-700);
+    --primary-color: var(--p-primary-color);
+    --primary-color-text: var(--p-primary-contrast-color);
 }
 
 .app-dark {
@@ -48,11 +48,11 @@
     font-size: 2.25rem;
     font-weight: 800;
     letter-spacing: 2px;
-    color: #1e3a8a;
-    background: #eff6ff;
+    color: var(--p-primary-800);
+    background: var(--p-primary-50);
     padding: 0.5rem 1.25rem;
     border-radius: 8px;
-    border: 2px solid #3b82f6;
+    border: 2px solid var(--p-primary-500);
     display: inline-block;
 }
 
